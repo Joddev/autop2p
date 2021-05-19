@@ -1,0 +1,15 @@
+settings:
+  - username: username
+    password: password
+    company: Honestfund
+    amount: 10000
+    periodMin: 0
+    periodMax: 12
+    rateMin: 0
+    rateMax: 24
+    categories:
+      - "PfRealEstate"
+      - "CorporateCredit"
+      - "MortgageRealEstate"
+      - "PersonalCredit"
+      - "UNKNOWN"
