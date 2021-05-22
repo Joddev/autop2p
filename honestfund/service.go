@@ -53,7 +53,7 @@ func convertToProducts(res *ListProductResponse) []autop2p.Product {
 func convertCategory(category int) autop2p.Category {
 	switch category {
 	case 1:
-		return autop2p.PfRealEstate
+		return autop2p.PF
 	case 2:
 		return autop2p.MortgageRealEstate
 	case 3:
