@@ -1,30 +1,29 @@
 package honestfund
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
-	"github.com/Joddev/autop2p"
 	"github.com/Joddev/autop2p/util"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
-	"strings"
 )
 
-func ListProducts() []autop2p.Product {
-	resp := util.HandleResponse(http.Post(
+type Api struct {
+	client *http.Client
+}
+
+func (a *Api) ListProducts(req *ListProductRequest) *ListProductResponse {
+	resp := util.HandleResponse(a.client.Post(
 		"https://www.honestfund.kr/api/search/product/cl",
 		"application/json",
-		bytes.NewBuffer(buildListProductRequest()),
+		util.EncodeJsonRequest(req),
 	))
 
-	data := &ListProductResponse{}
-	util.DecodeResponse(resp, data)
+	ret := &ListProductResponse{}
+	util.DecodeJsonResponse(resp, ret)
 
-	return convertToProducts(data)
+	return ret
 }
 
 type ListProductRequest struct {
@@ -34,21 +33,6 @@ type ListProductRequest struct {
 	State        []int    `json:"state"`
 	Tendency     []string `json:"tendency"`
 	TitleKeyword string   `json:"titleKeyword"`
-}
-
-func buildListProductRequest() []byte {
-	data, err := json.Marshal(ListProductRequest{
-		Category:     []string{},
-		PageSize:     50,
-		Scroll:       false,
-		State:        []int{2},
-		Tendency:     []string{},
-		TitleKeyword: "",
-	})
-	if err != nil {
-		panic(err)
-	}
-	return data
 }
 
 type ListProductResponse struct {
@@ -66,39 +50,8 @@ type ListProductResponse struct {
 	}
 }
 
-func convertToProducts(res *ListProductResponse) []autop2p.Product {
-	products := make([]autop2p.Product, len(res.Data.Products))
-	for i, p := range res.Data.Products {
-		products[i] = autop2p.Product{
-			Id:           strconv.Itoa(p.Uid),
-			Title:        p.TitleWithoutSeq,
-			Rate:         p.Rate,
-			Period:       p.Period,
-			Company:      autop2p.Honestfund,
-			RemainAmount: int(float64(p.GoalAmount) * (100 - p.ProgressPercentage)),
-			Category:     convertCategory(p.Category),
-		}
-	}
-	return products
-}
-
-func convertCategory(category int) autop2p.Category {
-	switch category {
-	case 1:
-		return autop2p.PfRealEstate
-	case 2:
-		return autop2p.MortgageRealEstate
-	case 3:
-		return autop2p.CorporateCredit
-	case 4:
-		return autop2p.PersonalCredit
-	default:
-		return autop2p.UNKNOWN
-	}
-}
-
-func Login(email string, password string) (string, error) {
-	res := util.HandleResponse(http.PostForm(
+func (a *Api) Login(email string, password string) string {
+	res := util.HandleResponse(a.client.PostForm(
 		"https://www.honestfund.kr/login",
 		url.Values{
 			"email":             {email},
@@ -112,32 +65,23 @@ func Login(email string, password string) (string, error) {
 
 	for _, cookie := range res.Cookies() {
 		if cookie.Name == "accessToken" && cookie.Value != "" {
-			return cookie.Value, nil
+			return cookie.Value
 		}
 	}
-	return "", errors.New("can't find accessToken from cookies")
+	panic(errors.New("can't find accessToken from cookies"))
 }
 
-func CheckAndInvest(accessToken string, productId string, amount int) *autop2p.InvestError {
-	err := checkInvestment(accessToken, productId, amount)
-	if err != nil {
-		return err
-	}
-	invest(accessToken, productId, amount)
-	return nil
-}
-
-func invest(accessToken string, productId string, amount int) {
-	req, _ := http.NewRequest(
+func (a *Api) Invest(accessToken string, req *InvestRequest) {
+	httpReq, _ := http.NewRequest(
 		"POST",
 		"https://www.honestfund.kr/invest/confirm",
-		bytes.NewBuffer(buildInvestRequest(productId, amount)),
+		util.EncodeJsonRequest(req),
 	)
 
-	addJsonContentType(req)
-	addAccessTokenCookie(req, accessToken)
+	addJsonContentType(httpReq)
+	addAccessTokenCookie(httpReq, accessToken)
 
-	res := util.HandleResponse((&http.Client{}).Do(req))
+	res := util.HandleResponse(a.client.Do(httpReq))
 	defer res.Body.Close()
 }
 
@@ -146,19 +90,7 @@ type InvestRequest struct {
 	InvestAmount int `json:"investAmount"`
 }
 
-func buildInvestRequest(productId string, amount int) []byte {
-	productUid, _ := strconv.Atoi(productId)
-	data, err := json.Marshal(InvestRequest{
-		ProductUid:   productUid,
-		InvestAmount: amount,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return data
-}
-
-func checkInvestment(accessToken string, productId string, amount int) *autop2p.InvestError {
+func (a *Api) GetInvestConfirmHtml(accessToken string, productId string, amount int) []byte {
 	req, _ := http.NewRequest(
 		"GET",
 		"https://www.honestfund.kr/invest/confirm",
@@ -172,7 +104,7 @@ func checkInvestment(accessToken string, productId string, amount int) *autop2p.
 
 	addAccessTokenCookie(req, accessToken)
 
-	res := util.HandleResponse((&http.Client{}).Do(req))
+	res := util.HandleResponse(a.client.Do(req))
 	defer res.Body.Close()
 
 	data, err := ioutil.ReadAll(res.Body)
@@ -180,59 +112,26 @@ func checkInvestment(accessToken string, productId string, amount int) *autop2p.
 		panic(err)
 	}
 
-	matcher, _ := regexp.Compile("app\\.constant\\('preload', (.+)\\)")
-	info := &PreloadInvest{}
-	if err = json.Unmarshal(matcher.FindSubmatch(data)[1], info); err != nil {
-		panic(err)
-	}
-
-	if info.Invest.InvestedAmount != 0 {
-		return &autop2p.InvestError{Code: autop2p.Duplicated}
-	}
-	return nil
+	return data
 }
 
-type PreloadInvest struct {
-	Invest struct {
-		InvestedAmount int
-	}
-}
+func (a *Api) ListInvestedProduct(accessToken string, req *ListInvestedProductsRequest) *ListInvestedProductsResponse {
+	httpReq, _ := http.NewRequest(
+		"POST",
+		"https://www.honestfund.kr/mypage/investor/investments/search",
+		util.EncodeJsonRequest(req),
+	)
 
-const investedProductsUrl = "https://www.honestfund.kr/mypage/investor/investments/search"
+	addJsonContentType(httpReq)
+	addAccessTokenCookie(httpReq, accessToken)
 
-func ListInvestedProductTitles(accessToken string) map[string]struct{} {
-	index, pageSize := 0, 25
-	totalCount := pageSize + 1
+	res := util.HandleResponse(a.client.Do(httpReq))
+	defer res.Body.Close()
 
-	container := make(map[string]struct{})
+	data := &ListInvestedProductsResponse{}
+	util.DecodeJsonResponse(res, data)
 
-	matcher, _ := regexp.Compile("(\\s+(\\d+호))?(\\s+(\\d+차))?$")
-
-	for totalCount > (index+1)*pageSize {
-		req, _ := http.NewRequest(
-			"POST",
-			investedProductsUrl,
-			bytes.NewBuffer(buildListInvestedProductsRequest(index, pageSize)),
-		)
-
-		addJsonContentType(req)
-		addAccessTokenCookie(req, accessToken)
-
-		res := util.HandleResponse((&http.Client{}).Do(req))
-
-		data := &ListInvestedProductsResponse{}
-		util.DecodeResponse(res, data)
-
-		for _, i := range data.Data.Investments {
-			container[strings.Trim(matcher.ReplaceAllString(i.Title, ""), " ")] = struct{}{}
-		}
-
-		totalCount = data.Data.TotalInvestmentsCount
-		index += 1
-
-		res.Body.Close()
-	}
-	return container
+	return data
 }
 
 type ListInvestedProductsRequest struct {
@@ -242,18 +141,6 @@ type ListInvestedProductsRequest struct {
 	IsOngoing    bool   `json:"isOngoing"`
 	PageSize     int    `json:"pageSize"`
 	TitleKeyword string `json:"titleKeyword"`
-}
-
-func buildListInvestedProductsRequest(index int, pageSize int) []byte {
-	doc, _ := json.Marshal(ListInvestedProductsRequest{
-		Category:     -1,
-		Index:        index * pageSize,
-		InvestState:  nil,
-		IsOngoing:    true,
-		PageSize:     pageSize,
-		TitleKeyword: "",
-	})
-	return doc
 }
 
 type ListInvestedProductsResponse struct {

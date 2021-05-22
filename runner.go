@@ -2,7 +2,6 @@ package autop2p
 
 type Runner interface {
 	ListProducts() []Product
-	ListInvestedProducts() []Product
 	InvestProduct(product *Product, amount int) *InvestError
 }
 
