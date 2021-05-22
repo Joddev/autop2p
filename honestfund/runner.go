@@ -10,8 +10,7 @@ type Runner struct {
 	service     Service
 }
 
-func Build(setting *autop2p.Setting) *Runner {
-	service := NewService()
+func NewRunner(setting *autop2p.Setting, service Service) *Runner {
 	accessToken := service.Login(setting.Username, setting.Password)
 
 	return &Runner{

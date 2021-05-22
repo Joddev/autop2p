@@ -19,8 +19,8 @@ type ServiceImpl struct {
 	api Api
 }
 
-func NewService() Service {
-	return &ServiceImpl{NewApi()}
+func NewService(api Api) Service {
+	return &ServiceImpl{api}
 }
 
 func (s *ServiceImpl) ListProducts() []autop2p.Product {

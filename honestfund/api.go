@@ -21,8 +21,8 @@ type ApiImpl struct {
 	client *http.Client
 }
 
-func NewApi() Api {
-	return &ApiImpl{&http.Client{}}
+func NewApi(client *http.Client) Api {
+	return &ApiImpl{client}
 }
 
 func (a *ApiImpl) ListProducts(req *ListProductRequest) *ListProductResponse {

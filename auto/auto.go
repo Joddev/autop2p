@@ -45,7 +45,7 @@ func filter(products []autop2p.Product, setting autop2p.Setting) []autop2p.Produ
 func buildRunner(setting *autop2p.Setting) autop2p.Runner {
 	switch setting.Company {
 	case autop2p.Honestfund:
-		return honestfund.Build(setting)
+		return honestfund.NewRunner(setting, HonestfundService)
 	default:
 		panic("unsupported type")
 	}
