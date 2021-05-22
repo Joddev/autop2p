@@ -9,11 +9,23 @@ import (
 	"strconv"
 )
 
-type Api struct {
+type Api interface {
+	ListProducts(req *ListProductRequest) *ListProductResponse
+	Login(email string, password string) string
+	Invest(accessToken string, req *InvestRequest)
+	GetInvestConfirmHtml(accessToken string, productId string, amount int) []byte
+	ListInvestedProduct(accessToken string, req *ListInvestedProductsRequest) *ListInvestedProductsResponse
+}
+
+type ApiImpl struct {
 	client *http.Client
 }
 
-func (a *Api) ListProducts(req *ListProductRequest) *ListProductResponse {
+func NewApi() Api {
+	return &ApiImpl{&http.Client{}}
+}
+
+func (a *ApiImpl) ListProducts(req *ListProductRequest) *ListProductResponse {
 	resp := util.HandleResponse(a.client.Post(
 		"https://www.honestfund.kr/api/search/product/cl",
 		"application/json",
@@ -50,7 +62,7 @@ type ListProductResponse struct {
 	}
 }
 
-func (a *Api) Login(email string, password string) string {
+func (a *ApiImpl) Login(email string, password string) string {
 	res := util.HandleResponse(a.client.PostForm(
 		"https://www.honestfund.kr/login",
 		url.Values{
@@ -71,7 +83,7 @@ func (a *Api) Login(email string, password string) string {
 	panic(errors.New("can't find accessToken from cookies"))
 }
 
-func (a *Api) Invest(accessToken string, req *InvestRequest) {
+func (a *ApiImpl) Invest(accessToken string, req *InvestRequest) {
 	httpReq, _ := http.NewRequest(
 		"POST",
 		"https://www.honestfund.kr/invest/confirm",
@@ -90,7 +102,7 @@ type InvestRequest struct {
 	InvestAmount int `json:"investAmount"`
 }
 
-func (a *Api) GetInvestConfirmHtml(accessToken string, productId string, amount int) []byte {
+func (a *ApiImpl) GetInvestConfirmHtml(accessToken string, productId string, amount int) []byte {
 	req, _ := http.NewRequest(
 		"GET",
 		"https://www.honestfund.kr/invest/confirm",
@@ -115,7 +127,7 @@ func (a *Api) GetInvestConfirmHtml(accessToken string, productId string, amount 
 	return data
 }
 
-func (a *Api) ListInvestedProduct(accessToken string, req *ListInvestedProductsRequest) *ListInvestedProductsResponse {
+func (a *ApiImpl) ListInvestedProduct(accessToken string, req *ListInvestedProductsRequest) *ListInvestedProductsResponse {
 	httpReq, _ := http.NewRequest(
 		"POST",
 		"https://www.honestfund.kr/mypage/investor/investments/search",

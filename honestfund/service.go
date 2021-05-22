@@ -3,25 +3,27 @@ package honestfund
 import (
 	"encoding/json"
 	"github.com/Joddev/autop2p"
-	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-type Service struct {
-	api *Api
+type Service interface {
+	ListProducts() []autop2p.Product
+	Login(email string, password string) string
+	CheckAndInvest(accessToken string, productId string, amount int) *autop2p.InvestError
+	ListInvestedProductTitles(accessToken string) map[string]struct{}
 }
 
-func BuildService() *Service {
-	return &Service{
-		api: &Api{
-			&http.Client{},
-		},
-	}
+type ServiceImpl struct {
+	api Api
 }
 
-func (s *Service) ListProducts() []autop2p.Product {
+func NewService() Service {
+	return &ServiceImpl{NewApi()}
+}
+
+func (s *ServiceImpl) ListProducts() []autop2p.Product {
 	resp := s.api.ListProducts(&ListProductRequest{
 		Category:     []string{},
 		PageSize:     50,
@@ -65,11 +67,11 @@ func convertCategory(category int) autop2p.Category {
 	}
 }
 
-func (s *Service) Login(email string, password string) string {
+func (s *ServiceImpl) Login(email string, password string) string {
 	return s.api.Login(email, password)
 }
 
-func (s* Service) CheckAndInvest(accessToken string, productId string, amount int) *autop2p.InvestError {
+func (s *ServiceImpl) CheckAndInvest(accessToken string, productId string, amount int) *autop2p.InvestError {
 	err := s.checkInvestment(accessToken, productId, amount)
 	if err != nil {
 		return err
@@ -82,7 +84,7 @@ func (s* Service) CheckAndInvest(accessToken string, productId string, amount in
 	return nil
 }
 
-func (s* Service) checkInvestment(accessToken string, productId string, amount int) *autop2p.InvestError {
+func (s *ServiceImpl) checkInvestment(accessToken string, productId string, amount int) *autop2p.InvestError {
 	data := s.api.GetInvestConfirmHtml(accessToken, productId, amount)
 
 	matcher, _ := regexp.Compile("app\\.constant\\('preload', (.+)\\)")
@@ -104,7 +106,7 @@ type PreloadInvest struct {
 	}
 }
 
-func (s* Service) ListInvestedProductTitles(accessToken string) map[string]struct{} {
+func (s *ServiceImpl) ListInvestedProductTitles(accessToken string) map[string]struct{} {
 	index, pageSize := 0, 25
 	totalCount := pageSize + 1
 
@@ -112,7 +114,7 @@ func (s* Service) ListInvestedProductTitles(accessToken string) map[string]struc
 
 	matcher, _ := regexp.Compile("(\\s+(\\d+호))?(\\s+(\\d+차))?$")
 
-	for totalCount > (index+1)*pageSize {
+	for totalCount > index*pageSize {
 		res := s.api.ListInvestedProduct(accessToken, &ListInvestedProductsRequest{
 			Category:     -1,
 			Index:        index * pageSize,

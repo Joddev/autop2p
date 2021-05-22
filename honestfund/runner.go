@@ -7,11 +7,11 @@ import (
 
 type Runner struct {
 	accessToken string
-	service     *Service
+	service     Service
 }
 
 func Build(setting *autop2p.Setting) *Runner {
-	service := BuildService()
+	service := NewService()
 	accessToken := service.Login(setting.Username, setting.Password)
 
 	return &Runner{
