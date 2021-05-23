@@ -1,14 +1,16 @@
-package auto
+package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/Joddev/autop2p"
 	"github.com/Joddev/autop2p/honestfund"
-	"gopkg.in/yaml.v2"
+	"github.com/aws/aws-lambda-go/lambda"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
 
-func Run() {
+func Run(ctx context.Context) {
 	for _, setting := range loadSettings() {
 		runner := newRunner(&setting)
 		products := runner.ListProducts()
@@ -29,8 +31,10 @@ func Run() {
 			}
 			count += 1
 		}
-		fmt.Printf("%d건 총 투자 금액 %d원", count, setting.Amount*count)
+		fmt.Printf("%s %s %d건 총 투자 금액 %d원\n",
+			setting.Company, setting.Username, count, setting.Amount*count)
 	}
+	ctx.Done()
 }
 
 func filter(products []autop2p.Product, setting autop2p.Setting) []autop2p.Product {
@@ -66,3 +70,8 @@ func loadSettings() []autop2p.Setting {
 
 	return conf.Settings
 }
+
+func main() {
+	lambda.Start(Run)
+}
+

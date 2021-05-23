@@ -3,7 +3,7 @@ module github.com/Joddev/autop2p
 go 1.16
 
 require (
-	github.com/PuerkitoBio/goquery v1.6.1 // indirect
+	github.com/aws/aws-lambda-go v1.24.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

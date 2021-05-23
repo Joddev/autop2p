@@ -1,4 +1,4 @@
-package auto
+package main
 
 import (
 	"github.com/Joddev/autop2p/honestfund"
