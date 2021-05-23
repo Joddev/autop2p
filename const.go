@@ -4,6 +4,7 @@ type CompanyType string
 
 const (
 	Honestfund CompanyType = "Honestfund"
+	Peoplefund CompanyType = "Peoplefund"
 )
 
 type Category string

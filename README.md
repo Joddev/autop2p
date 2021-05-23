@@ -20,6 +20,7 @@ P2P 투자 서비스를 제공하는 업체들이 자동분산투자 기능을 �
   - `password`: 로그인에 사용되는 패스워드
   - `company`: P2P 서비스 업체
     - `Honestfund`: [어니스트펀드](https://www.honestfund.kr/)
+    - `Peoplefund`: [피플펀드](https://www.peoplefund.co.kr/)
   - `amount`: 한 상품에 투자하는 금액
   - `periodMin`: 투자하는 상품의 최소 개월 수
   - `periodMax`: 투자하는 상품의 최대 개월 수
@@ -34,4 +35,6 @@ P2P 투자 서비스를 제공하는 업체들이 자동분산투자 기능을 �
 
 ### 업체별 특이사항
 - `Honestfund`
-  - 여러회차에 나눠서 모으는 건설자금의 반복 투자를 하지않도록 구현
+  - 여러회차에 나눠서 모으는 상품의 반복 투자를 하지 않도록 구현
+- `Peoplefund`
+  - 여러회차에 나눠서 모으는 상품의 반복 투자를 하지 않도록 구현

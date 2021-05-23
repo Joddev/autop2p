@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Joddev/autop2p"
 	"github.com/Joddev/autop2p/honestfund"
+	"github.com/Joddev/autop2p/peoplefund"
 	"github.com/aws/aws-lambda-go/lambda"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -51,8 +52,10 @@ func newRunner(setting *autop2p.Setting) autop2p.Runner {
 	switch setting.Company {
 	case autop2p.Honestfund:
 		return honestfund.NewRunner(setting, HonestfundService)
+	case autop2p.Peoplefund:
+		return peoplefund.NewRunner(setting, PeoplefundService)
 	default:
-		panic("unsupported type")
+		panic("unsupported company type")
 	}
 }
 
@@ -74,4 +77,5 @@ func loadSettings() []autop2p.Setting {
 func main() {
 	lambda.Start(Run)
 }
+
 
