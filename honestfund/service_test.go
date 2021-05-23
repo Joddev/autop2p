@@ -120,7 +120,7 @@ func TestServiceImpl_CheckAndInvest_Duplicated(t *testing.T) {
 		  <div>
 			<script>
 			app = angular.module("app");
-			app.constant('preload', {"invest":{"investedAmount":400000,"serviceInvestTerms":true}});
+			app.constant('preload', {"account":{"balance":1000000,"maxInvestAmount":1000000},"invest":{"investedAmount":400000}});
 			</script>
 		  </div>
 		</body>
@@ -133,6 +133,52 @@ func TestServiceImpl_CheckAndInvest_Duplicated(t *testing.T) {
 	assert.Equal(t, err.Code, autop2p.Duplicated)
 }
 
+func TestServiceImpl_CheckAndInvest_InsufficientBalance(t *testing.T) {
+	mockApi := &ApiMock{}
+	mockApi.On("GetInvestConfirmHtml", "accessToken", "1", 10000).Return([]byte(`
+		<!DOCTYPE html>
+		<html lang="ko" ng-app="app">
+		<head></head>
+		<body class="page-invest _confirm">
+		  <div>
+			<script>
+			app = angular.module("app");
+			app.constant('preload', {"account":{"balance":1000,"maxInvestAmount":1000000},"invest":{"investedAmount":null}});
+			</script>
+		  </div>
+		</body>
+		</html>
+   `))
+
+	s := NewService(mockApi)
+	err := s.CheckAndInvest("accessToken", "1", 10000)
+
+	assert.Equal(t, err.Code, autop2p.InsufficientBalance)
+}
+
+func TestServiceImpl_CheckAndInvest_InsufficientCapacity(t *testing.T) {
+	mockApi := &ApiMock{}
+	mockApi.On("GetInvestConfirmHtml", "accessToken", "1", 10000).Return([]byte(`
+		<!DOCTYPE html>
+		<html lang="ko" ng-app="app">
+		<head></head>
+		<body class="page-invest _confirm">
+		  <div>
+			<script>
+			app = angular.module("app");
+			app.constant('preload', {"account":{"balance":1000000,"maxInvestAmount":0},"invest":{"investedAmount":null}});
+			</script>
+		  </div>
+		</body>
+		</html>
+   `))
+
+	s := NewService(mockApi)
+	err := s.CheckAndInvest("accessToken", "1", 10000)
+
+	assert.Equal(t, err.Code, autop2p.InsufficientCapacity)
+}
+
 func TestServiceImpl_CheckAndInvest(t *testing.T) {
 	mockApi := &ApiMock{}
 	mockApi.On("GetInvestConfirmHtml", "accessToken", "1", 10000).Return([]byte(`
@@ -143,7 +189,7 @@ func TestServiceImpl_CheckAndInvest(t *testing.T) {
 		  <div>
 			<script>
 			app = angular.module("app");
-			app.constant('preload', {"invest":{"investedAmount":null,"serviceInvestTerms":true}});
+			app.constant('preload', {"account":{"balance":10000,"maxInvestAmount":10000},"invest":{"investedAmount":null}});
 			</script>
 		  </div>
 		</body>

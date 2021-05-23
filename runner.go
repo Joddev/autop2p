@@ -12,6 +12,7 @@ type InvestError struct {
 const (
 	Duplicated           = "Duplicated"
 	InsufficientCapacity = "InsufficientCapacity"
+	InsufficientBalance  = "InsufficientBalance"
 )
 
 func (err *InvestError) Error() string {
@@ -20,6 +21,8 @@ func (err *InvestError) Error() string {
 		return "duplicated investment"
 	case InsufficientCapacity:
 		return "insufficient residual capacity"
+	case InsufficientBalance:
+		return "Insufficient balance"
 	default:
 		return "unsupported InvestError Code"
 	}

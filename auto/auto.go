@@ -10,7 +10,7 @@ import (
 
 func Run() {
 	for _, setting := range loadSettings() {
-		runner := buildRunner(&setting)
+		runner := newRunner(&setting)
 		products := runner.ListProducts()
 
 		candidates := filter(products, setting)
@@ -21,6 +21,7 @@ func Run() {
 			if err != nil {
 				switch err.Code {
 				case autop2p.Duplicated:
+				case autop2p.InsufficientCapacity:
 					continue
 				default:
 					panic(err)
@@ -42,7 +43,7 @@ func filter(products []autop2p.Product, setting autop2p.Setting) []autop2p.Produ
 	return ret
 }
 
-func buildRunner(setting *autop2p.Setting) autop2p.Runner {
+func newRunner(setting *autop2p.Setting) autop2p.Runner {
 	switch setting.Company {
 	case autop2p.Honestfund:
 		return honestfund.NewRunner(setting, HonestfundService)

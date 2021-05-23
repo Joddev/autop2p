@@ -97,10 +97,20 @@ func (s *ServiceImpl) checkInvestment(accessToken string, productId string, amou
 	if info.Invest.InvestedAmount != 0 {
 		return &autop2p.InvestError{Code: autop2p.Duplicated}
 	}
+	if info.Account.Balance < amount {
+		return &autop2p.InvestError{Code: autop2p.InsufficientBalance}
+	}
+	if info.Account.MaxInvestAmount < amount {
+		return &autop2p.InvestError{Code: autop2p.InsufficientCapacity}
+	}
 	return nil
 }
 
 type PreloadInvest struct {
+	Account struct {
+		Balance int
+		MaxInvestAmount int
+	}
 	Invest struct {
 		InvestedAmount int
 	}
