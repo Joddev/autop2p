@@ -35,4 +35,4 @@ functions:
   auto:
     handler: bin/main
     events:
-      - schedule: cron(0 13 * * ? *)
+      - schedule: cron(0 4 * * ? *)
