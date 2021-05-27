@@ -12,6 +12,11 @@ import (
 )
 
 func Run(ctx context.Context) {
+	auto()
+	ctx.Done()
+}
+
+func auto() {
 	for _, setting := range loadSettings() {
 		runner := newRunner(&setting)
 		products := runner.ListProducts()
@@ -26,16 +31,18 @@ func Run(ctx context.Context) {
 				case autop2p.Duplicated:
 				case autop2p.InsufficientCapacity:
 					continue
+				case autop2p.InsufficientBalance:
+					break
 				default:
 					panic(err)
 				}
+			} else {
+				count += 1
 			}
-			count += 1
 		}
 		fmt.Printf("%s %s %d건 총 투자 금액 %d원\n",
 			setting.Company, setting.Username, count, setting.Amount*count)
 	}
-	ctx.Done()
 }
 
 func filter(products []autop2p.Product, setting autop2p.Setting) []autop2p.Product {
