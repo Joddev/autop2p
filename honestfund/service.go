@@ -135,7 +135,11 @@ func (s *ServiceImpl) ListInvestedProductTitles(accessToken string) map[string]s
 		})
 
 		for _, i := range res.Data.Investments {
-			container[strings.Trim(matcher.ReplaceAllString(i.Title, ""), " ")] = struct{}{}
+			if strings.HasPrefix(i.Title, "SCF") {
+				container[strings.Trim(i.Title, " ")] = struct{}{}
+			} else {
+				container[strings.Trim(matcher.ReplaceAllString(i.Title, ""), " ")] = struct{}{}
+			}
 		}
 
 		totalCount = res.Data.TotalInvestmentsCount

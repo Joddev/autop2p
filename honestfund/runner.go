@@ -24,11 +24,7 @@ func (r *Runner) ListProducts() []autop2p.Product {
 
 	var products []autop2p.Product
 	for _, product := range r.service.ListProducts() {
-		if _, ok := investedProductTitleSet[strings.Trim(product.Title, " ")]; ok {
-			if strings.Contains(product.Title, "SCF") {
-				products = append(products, product)
-			}
-		} else {
+		if _, ok := investedProductTitleSet[strings.Trim(product.Title, " ")]; !ok {
 			products = append(products, product)
 		}
 	}

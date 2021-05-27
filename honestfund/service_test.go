@@ -258,7 +258,7 @@ func TestServiceImpl_ListInvestedProductTitles(t *testing.T) {
 
 	assert.Len(t, ret, 5)
 	assert.Contains(t, ret, "어펀")
-	assert.Contains(t, ret, "SCF 베이직")
+	assert.Contains(t, ret, "SCF 베이직 131호")
 	assert.Contains(t, ret, "중간에 1호 혹은 2차 같은게 들어 있어도 된다")
 	assert.Contains(t, ret, "이 페이지에 25개가 들어있는 셈 치자")
 	assert.Contains(t, ret, "여수 마리나 항만")

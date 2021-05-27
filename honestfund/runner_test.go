@@ -52,11 +52,12 @@ func TestRunner_ListProducts(t *testing.T) {
 			"TITLE#1":      {},
 			"Second Title": {},
 			"P2P":          {},
-			"SCF Basic":    {},
+			"SCF Basic 1호":    {},
 		},
 	)
 	m.On("ListProducts").Return([]autop2p.Product{
-		{Title: "SCF Basic"},
+		{Title: "SCF Basic 1호"},
+		{Title: "SCF Basic 2호"},
 		{Title: "TITLE#1"},
 		{Title: "P2P"},
 		{Title: "Third Title"},
@@ -69,6 +70,6 @@ func TestRunner_ListProducts(t *testing.T) {
 	p := r.ListProducts()
 
 	assert.Len(t, p, 2)
-	assert.Contains(t, p, autop2p.Product{Title: "SCF Basic"})
+	assert.Contains(t, p, autop2p.Product{Title: "SCF Basic 2호"})
 	assert.Contains(t, p, autop2p.Product{Title: "Third Title"})
 }
